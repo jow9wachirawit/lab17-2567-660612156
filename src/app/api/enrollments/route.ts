@@ -37,6 +37,16 @@ export const GET = async (request:NextRequest) => {
   // );
 
   //get all courses enrolled by a student
+  if((studentId && courseNo)|| (!studentId && !courseNo)){
+    return NextResponse.json(
+      {
+        ok: false,
+        message: "Please provide either studentId or courseNo and not both!",
+      },
+      { status: 400 }
+    );
+  }
+
   if (studentId) {
     const courseNoList = [];
     for (const enroll of DB.enrollments) {
@@ -60,16 +70,25 @@ export const GET = async (request:NextRequest) => {
     const studentIdList = [];
     for (const enroll of DB.enrollments) {
       //your code here
-    }
+      if(enroll.courseNo === courseNo) {
+        studentIdList.push(enroll.studentId);
+
+    }}
 
     const students:Student[] = [];
     //your code here
+    for (const studentId of studentIdList) {
+      const student = DB.students.find((x) => x.studentId === studentId);
+      if(student)students.push(student);
+    }
+    
 
     return NextResponse.json({
       ok: true,
       students,
     });
-  }
+  
+}
 };
 
 export const POST = async (request:NextRequest) => {
@@ -140,19 +159,23 @@ export const DELETE = async (request:NextRequest) => {
 
   const { studentId, courseNo } = body;
 
-  //check if studentId and courseNo exist on enrollment
-
-  // return NextResponse.json(
-  //   {
-  //     ok: false,
-  //     message: "Enrollment does not exist",
-  //   },
-  //   { status: 404 }
-  // );
+  const foundIdAndCourse = DB.enrollments.findIndex((x) => x.studentId === studentId && x.courseNo === courseNo)
+  if(foundIdAndCourse === -1) {
+    return NextResponse.json(
+      {
+        ok: false,
+        message: "Enrollment does not exist",
+      },
+      { status: 404 }
+    );
+  }
 
   //perform deletion by using splice or array filter
+  if(foundIdAndCourse) {
+    DB.enrollments.splice(DB.enrollments.findIndex((x) => x.studentId === studentId && x.courseNo === courseNo), 1);
+  }
 
-  //if code reach here it means deletion is complete
+
   return NextResponse.json({
     ok: true,
     message: "Enrollment has been deleted",
